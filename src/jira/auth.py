@@ -120,7 +120,7 @@ def save_login_config(base_dir, cloud_id, site, client_id, refresh_token, refres
     base_config_path.write_text(json.dumps(base_config, indent=2))
 
 
-SCOPES = "read:jira-work write:jira-work read:jira-user manage:jira-project offline_access"
+SCOPES = "read:jira-work write:jira-work read:jira-user offline_access"
 REDIRECT_URI = "http://localhost:8888/callback"
 CALLBACK_PORT = 8888
 
