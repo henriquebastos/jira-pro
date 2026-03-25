@@ -1,11 +1,11 @@
 [project]
-name = "jira-cli"
+name = "jira-pro"
 version = "0.1.0"
-description = "Jira Cloud CLI + library for agents and humans"
+description = "Jira Cloud client for AI agents and automation"
 readme = "README.md"
 license = "MIT"
 authors = [
-    { name = "Your Name", email = "you@example.com" }
+    { name = "Henrique Bastos", email = "henrique@bastos.net" }
 ]
 requires-python = ">=3.13"
 dependencies = [

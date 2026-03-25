@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 
-BASE_DIR = "~/.config/jira-cli"
+BASE_DIR = "~/.config/jira-pro"
 
 
 class ConfigError(Exception):
