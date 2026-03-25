@@ -29,25 +29,38 @@ def build_field_registry(raw_fields):
 
 
 def build_type_schema(raw_createmeta):
-    """Per-type createmeta → {id, required, fields: {name: {type, required, allowed?}}}"""
+    """Per-type createmeta → {id, required, fields: {name: {type, required, allowed?}}}
+
+    Handles both dict-style fields (test fixtures) and list-style fields (real Jira API).
+    """
     fields = {}
     required = []
-    for field_id, field_data in raw_createmeta.get("fields", {}).items():
+    raw_fields = raw_createmeta.get("fields", {})
+
+    # Real API returns a list of field dicts; test fixtures use a dict keyed by field ID
+    if isinstance(raw_fields, list):
+        items = [(f.get("fieldId", f.get("key")), f) for f in raw_fields]
+    else:
+        items = raw_fields.items()
+
+    for field_id, field_data in items:
         entry = {
             "type": field_data.get("schema", {}).get("type", "any"),
             "required": field_data.get("required", False),
         }
         if field_data.get("allowedValues"):
-            entry["allowed"] = [v["name"] for v in field_data["allowedValues"] if "name" in v]
+            entry["allowed"] = [v.get("name", v.get("value", str(v))) for v in field_data["allowedValues"]]
         fields[field_id] = entry
         if field_data.get("required"):
             required.append(field_id)
-    return {"id": raw_createmeta["id"], "required": required, "fields": fields}
+    return {"id": raw_createmeta.get("id", ""), "required": required, "fields": fields}
 
 
 # Field types that get value expansion
 SYSTEM_OPTION_TYPES = {"priority", "status", "resolution"}
 LINK_TYPES = {"issuelink"}
+KEY_TYPES = {"project", "parent", "any"}  # Types that expand string → {"key": value}
+NAME_TYPES = {"issuetype"}  # Types that expand string → {"name": value}
 
 
 def resolve_fields(friendly, schema):
@@ -71,6 +84,10 @@ def resolve_fields(friendly, schema):
         # Expand based on type
         if field_type in LINK_TYPES and isinstance(value, str):
             result[field_id] = {"key": value}
+        elif field_type in KEY_TYPES and isinstance(value, str):
+            result[field_id] = {"key": value}
+        elif field_type in NAME_TYPES and isinstance(value, str):
+            result[field_id] = {"name": value}
         elif field_type in SYSTEM_OPTION_TYPES and isinstance(value, str):
             result[field_id] = {"name": value}
         elif field_type == "option" and not field_info.get("system") and isinstance(value, str):

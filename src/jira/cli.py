@@ -177,6 +177,40 @@ def cli(argv=None):
                 print(json.dumps({"message": "Logged out"}))
             except (ConfigError, FileNotFoundError):
                 print(json.dumps({"message": "Not logged in"}))
+    elif args.command == "fields":
+        from jira.client import JiraClient
+
+        if args.subcommand == "sync":
+            from jira.schema import sync
+
+            client = JiraClient.from_config(instance=args.instance)
+            instance_dir = _get_instance_dir(args.instance)
+            sync(client.session, instance_dir, project=getattr(args, "project", None))
+            schema = json.loads((instance_dir / "schema.json").read_text())
+            field_count = len(schema.get("fields", {}))
+            project_count = len(schema.get("projects", {}))
+            print(json.dumps({"message": f"Synced {field_count} fields, {project_count} project(s)"}))
+        elif args.subcommand == "list":
+            instance_dir = _get_instance_dir(args.instance)
+            schema = json.loads((instance_dir / "schema.json").read_text())
+            fields = schema.get("fields", {})
+            filter_term = getattr(args, "filter", None)
+            if filter_term:
+                fields = {k: v for k, v in fields.items() if filter_term.lower() in k.lower()}
+            print(json.dumps(fields, indent=2))
+        elif args.subcommand == "schema":
+            instance_dir = _get_instance_dir(args.instance)
+            schema = json.loads((instance_dir / "schema.json").read_text())
+            projects = schema.get("projects", {})
+            project = projects.get(args.project, {})
+            types = project.get("types", {})
+            type_schema = types.get(args.type)
+            if type_schema:
+                print(json.dumps(type_schema, indent=2))
+            else:
+                available = list(types.keys())
+                print(json.dumps({"error": f"Type '{args.type}' not found", "available": available}), file=sys.stderr)
+                sys.exit(1)
     elif args.command == "issue":
         from jira.client import JiraClient
         from jira.formatters import format_issue
