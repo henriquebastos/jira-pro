@@ -36,7 +36,8 @@ uv tool install -e .
 jira auth login
 
 # 2. Sync your instance's field schema
-jira fields sync --project DEV
+jira fields sync
+jira fields sync --project DEV    # sync type schemas for a specific project
 
 # 3. Get an issue
 jira issue get DEV-123
@@ -199,13 +200,17 @@ Use `--raw-payload` to bypass all resolution.
 ## Schema
 
 ```bash
-jira fields sync --project DEV        # fetch field config from your instance
+jira fields sync                      # sync fields + discover available projects
+jira fields sync --project DEV        # also sync type schemas (required fields, allowed values)
 jira fields list                      # all fields
 jira fields list --filter story       # search by name
-jira fields schema --project DEV --type Task    # required fields + allowed values
+jira fields schema --project DEV --type Task    # full type schema for agents
 ```
 
 Run after login, and again if your Jira admin changes field configuration.
+You can sync multiple projects incrementally — each `--project` adds to the
+existing schema without overwriting previously synced projects.
+
 Stored at `~/.config/jira-cli/{cloud_id}/schema.json`.
 
 ## Templates
