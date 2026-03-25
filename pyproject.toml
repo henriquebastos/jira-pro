@@ -8,10 +8,9 @@ authors = [
     { name = "Your Name", email = "you@example.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
-
-# TODO: Add requestspro when available (private package, not on PyPI)
-# dependencies = ["requestspro"]
+dependencies = [
+    "requests-pro",
+]
 
 [build-system]
 requires = ["uv_build>=0.10.7,<0.11.0"]
@@ -27,6 +26,7 @@ jira = "jira.cli:cli"
 dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
+    "responses>=0.26.0",
     "ruff>=0.15.6",
     "time-machine>=3.2.0",
 ]
