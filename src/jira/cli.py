@@ -17,6 +17,20 @@ def parse(argv=None):
     auth_sub.add_parser("status")
     auth_sub.add_parser("logout")
 
+    # fields subcommands
+    fields_parser = subparsers.add_parser("fields")
+    fields_sub = fields_parser.add_subparsers(dest="subcommand")
+
+    fields_sync = fields_sub.add_parser("sync")
+    fields_sync.add_argument("--project", help="Sync specific project")
+
+    fields_list = fields_sub.add_parser("list")
+    fields_list.add_argument("--filter", help="Filter fields by name")
+
+    fields_schema = fields_sub.add_parser("schema")
+    fields_schema.add_argument("--project", required=True, help="Project key")
+    fields_schema.add_argument("--type", required=True, help="Issue type name")
+
     return parser.parse_args(argv)
 
 
