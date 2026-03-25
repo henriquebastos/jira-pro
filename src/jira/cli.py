@@ -83,6 +83,63 @@ def parse(argv=None):
     bulk_edit.add_argument("keys", nargs="+", help="Issue keys")
     bulk_edit.add_argument("--set", action="append", help="key=value field")
 
+    # template subcommands
+    template_parser = subparsers.add_parser("template")
+    template_sub = template_parser.add_subparsers(dest="subcommand")
+
+    template_sub.add_parser("list")
+
+    template_show = template_sub.add_parser("show")
+    template_show.add_argument("name", help="Template name")
+
+    template_create = template_sub.add_parser("create")
+    template_create.add_argument("name", help="Template name")
+    template_create.add_argument("--json", required=True, help="Template JSON")
+
+    template_edit = template_sub.add_parser("edit")
+    template_edit.add_argument("name", help="Template name")
+
+    template_delete = template_sub.add_parser("delete")
+    template_delete.add_argument("name", help="Template name")
+
+    template_default = template_sub.add_parser("default")
+    template_default.add_argument("name", nargs="?", default=None, help="Template name to set as default")
+    template_default.add_argument("--clear", action="store_true", help="Clear default template")
+
+    # sprint subcommands
+    sprint_parser = subparsers.add_parser("sprint")
+    sprint_sub = sprint_parser.add_subparsers(dest="subcommand")
+
+    sprint_current = sprint_sub.add_parser("current")
+    sprint_current.add_argument("--board", required=True, help="Board ID")
+
+    sprint_list = sprint_sub.add_parser("list")
+    sprint_list.add_argument("--board", required=True, help="Board ID")
+    sprint_list.add_argument("--state", help="Sprint states (e.g. active,future)")
+
+    sprint_issues = sprint_sub.add_parser("issues")
+    sprint_issues.add_argument("sprint_id", help="Sprint ID")
+    sprint_issues.add_argument("--fields", help="Comma-separated field list")
+
+    # board subcommands
+    board_parser = subparsers.add_parser("board")
+    board_sub = board_parser.add_subparsers(dest="subcommand")
+
+    board_list = board_sub.add_parser("list")
+    board_list.add_argument("--project", help="Project key")
+
+    board_backlog = board_sub.add_parser("backlog")
+    board_backlog.add_argument("board_id", help="Board ID")
+
+    # user subcommands
+    user_parser = subparsers.add_parser("user")
+    user_sub = user_parser.add_subparsers(dest="subcommand")
+
+    user_search = user_sub.add_parser("search")
+    user_search.add_argument("query", help="Search query")
+
+    user_sub.add_parser("me")
+
     return parser.parse_args(argv)
 
 

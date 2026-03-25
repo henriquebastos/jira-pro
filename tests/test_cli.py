@@ -90,3 +90,106 @@ class TestParseIssue:
         assert args.command == "bulk"
         assert args.keys == ["DEV-1", "DEV-2"]
         assert args.set == ["parent=DEV-100"]
+
+
+class TestParseTemplate:
+    def test_template_list(self):
+        args = parse(["template", "list"])
+        assert args.command == "template"
+        assert args.subcommand == "list"
+
+    def test_template_show(self):
+        args = parse(["template", "show", "instant"])
+        assert args.name == "instant"
+
+    def test_template_create(self):
+        args = parse(["template", "create", "instant", "--json", '{"project": "DEV"}'])
+        assert args.name == "instant"
+        assert args.json == '{"project": "DEV"}'
+
+    def test_template_delete(self):
+        args = parse(["template", "delete", "instant"])
+        assert args.name == "instant"
+
+    def test_template_default_set(self):
+        args = parse(["template", "default", "instant"])
+        assert args.name == "instant"
+
+    def test_template_default_show(self):
+        args = parse(["template", "default"])
+        assert args.name is None
+
+    def test_template_default_clear(self):
+        args = parse(["template", "default", "--clear"])
+        assert args.clear is True
+
+    def test_issue_create(self):
+        args = parse(["issue", "create", "--summary", "Fix bug"])
+        assert args.subcommand == "create"
+        assert args.summary == "Fix bug"
+
+    def test_issue_create_with_template(self):
+        args = parse(["issue", "create", "--template", "instant", "--summary", "Fix"])
+        assert args.template == "instant"
+
+    def test_issue_create_raw(self):
+        args = parse(["issue", "create", "--raw-payload", '{"fields": {}}'])
+        assert args.raw_payload == '{"fields": {}}'
+
+
+class TestParseSprint:
+    def test_sprint_current(self):
+        args = parse(["sprint", "current", "--board", "42"])
+        assert args.command == "sprint"
+        assert args.subcommand == "current"
+        assert args.board == "42"
+
+    def test_sprint_list(self):
+        args = parse(["sprint", "list", "--board", "42", "--state", "active,future"])
+        assert args.state == "active,future"
+
+    def test_sprint_issues(self):
+        args = parse(["sprint", "issues", "123", "--fields", "summary,status"])
+        assert args.sprint_id == "123"
+        assert args.fields == "summary,status"
+
+
+class TestParseBoard:
+    def test_board_list(self):
+        args = parse(["board", "list", "--project", "DEV"])
+        assert args.project == "DEV"
+
+    def test_board_backlog(self):
+        args = parse(["board", "backlog", "42"])
+        assert args.board_id == "42"
+
+
+class TestParseUser:
+    def test_user_search(self):
+        args = parse(["user", "search", "alice"])
+        assert args.query == "alice"
+
+    def test_user_me(self):
+        args = parse(["user", "me"])
+        assert args.subcommand == "me"
+
+
+class TestParseIssueOps:
+    def test_issue_transition(self):
+        args = parse(["issue", "transition", "DEV-123", "In Progress"])
+        assert args.key == "DEV-123"
+        assert args.status == "In Progress"
+
+    def test_issue_assign(self):
+        args = parse(["issue", "assign", "DEV-123", "alice@example.com"])
+        assert args.assignee == "alice@example.com"
+
+    def test_issue_comment(self):
+        args = parse(["issue", "comment", "DEV-123", "Deployed"])
+        assert args.body == "Deployed"
+
+    def test_issue_link(self):
+        args = parse(["issue", "link", "DEV-1", "DEV-2", "--type", "blocks"])
+        assert args.inward_key == "DEV-1"
+        assert args.outward_key == "DEV-2"
+        assert args.link_type == "blocks"
