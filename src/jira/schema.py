@@ -61,6 +61,8 @@ SYSTEM_OPTION_TYPES = {"priority", "status", "resolution"}
 LINK_TYPES = {"issuelink"}
 KEY_TYPES = {"project", "parent", "any"}  # Types that expand string → {"key": value}
 NAME_TYPES = {"issuetype"}  # Types that expand string → {"name": value}
+# System array fields where items are {"name": value}
+NAMED_ARRAY_FIELDS = {"components", "fixVersions", "versions"}
 
 
 def resolve_fields(friendly, schema):
@@ -92,6 +94,8 @@ def resolve_fields(friendly, schema):
             result[field_id] = {"name": value}
         elif field_type == "option" and not field_info.get("system") and isinstance(value, str):
             result[field_id] = {"value": value}
+        elif field_id in NAMED_ARRAY_FIELDS and isinstance(value, list) and value and isinstance(value[0], str):
+            result[field_id] = [{"name": v} for v in value]
         else:
             result[field_id] = value
 
