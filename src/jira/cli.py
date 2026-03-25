@@ -1,6 +1,7 @@
 # Python imports
 import argparse
 import json
+import sys
 
 
 def parse(argv=None):
@@ -149,10 +150,30 @@ def cli(argv=None):
 
     if args.command == "auth":
         if args.subcommand == "login":
-            print(json.dumps({"message": "Login flow not yet wired"}))
+            client_id = input("Enter your Atlassian OAuth client_id: ").strip()
+            if not client_id:
+                print(json.dumps({"error": "client_id is required"}), file=sys.stderr)
+                sys.exit(1)
+            from jira.auth import login
+            result = login(client_id)
+            print(json.dumps(result))
         elif args.subcommand == "status":
-            print(json.dumps({"status": "not logged in"}))
+            try:
+                from jira.config import ConfigError, discover_instance_dir
+                instance_dir = discover_instance_dir(instance=getattr(args, "instance", None))
+                config = json.loads((instance_dir / "config.json").read_text())
+                print(json.dumps({"status": "logged in", **config}))
+            except (ConfigError, FileNotFoundError):
+                print(json.dumps({"status": "not logged in"}))
         elif args.subcommand == "logout":
-            print(json.dumps({"message": "Logged out"}))
+            try:
+                import shutil
+
+                from jira.config import ConfigError, discover_instance_dir
+                instance_dir = discover_instance_dir(instance=getattr(args, "instance", None))
+                shutil.rmtree(instance_dir)
+                print(json.dumps({"message": "Logged out"}))
+            except (ConfigError, FileNotFoundError):
+                print(json.dumps({"message": "Not logged in"}))
     elif args.command is None:
         parse(["--help"])
