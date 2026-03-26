@@ -195,7 +195,7 @@ def wait_for_callback(port=CALLBACK_PORT, timeout=CALLBACK_TIMEOUT):
     return result["code"]
 
 
-def login(client_id, client_secret=None, base_dir="~/.config/jira-pro"):
+def login(client_id, client_secret=None, base_dir="~/.config/jira-genie"):
     """Run the full OAuth 2.0 login flow. Opens browser, waits for callback, saves tokens."""
     base_dir = Path(base_dir).expanduser()
 

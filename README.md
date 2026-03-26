@@ -1,4 +1,4 @@
-# jira-pro
+# jira-genie
 
 Jira Cloud client for AI agents and automation. JSON in, JSON out.
 
@@ -18,14 +18,14 @@ manage Jira issues programmatically. Also works as a human CLI — pipe through
 ## Install
 
 ```bash
-uv tool install jira-pro
+uv tool install jira-genie
 ```
 
 Or from source:
 
 ```bash
-git clone https://github.com/henriquebastos/jira-pro.git
-cd jira-pro
+git clone https://github.com/henriquebastos/jira-genie.git
+cd jira-genie
 uv tool install -e .
 ```
 
@@ -211,7 +211,7 @@ Run after login, and again if your Jira admin changes field configuration.
 You can sync multiple projects incrementally — each `--project` adds to the
 existing schema without overwriting previously synced projects.
 
-Stored at `~/.config/jira-pro/{cloud_id}/schema.json`.
+Stored at `~/.config/jira-genie/{cloud_id}/schema.json`.
 
 ## Templates
 
@@ -268,7 +268,7 @@ jira issue edit DEV-123 --set priority=<TAB>  → P0: Critical, P1: High, ...
 ## Configuration
 
 ```
-~/.config/jira-pro/
+~/.config/jira-genie/
 ├── config.json                     # default instance
 └── {cloud_id}/
     ├── config.json                 # client_id, cloud_id, site
@@ -281,8 +281,8 @@ jira issue edit DEV-123 --set priority=<TAB>  → P0: Critical, P1: High, ...
 ## Development
 
 ```bash
-git clone https://github.com/henriquebastos/jira-pro.git
-cd jira-pro
+git clone https://github.com/henriquebastos/jira-genie.git
+cd jira-genie
 uv sync
 uv run pytest           # 148 tests
 uv run ruff check src/ tests/
