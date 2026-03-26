@@ -1,19 +1,23 @@
-# jira-genie
+# jira-genie 🧞
 
-Jira Cloud client for AI agents and automation. JSON in, JSON out.
+Your AI agent's interface to Jira Cloud. JSON in, JSON out.
 
-Built for LLM agents, CI pipelines, and scripts that need to read, create, and
-manage Jira issues programmatically. Also works as a human CLI — pipe through
-`jq` for readable output.
+Give your agents the ability to search, create, edit, and manage Jira issues
+through a simple CLI. Schema-aware field resolution means agents write
+`story_points` — not `customfield_10036`. Templates mean repetitive ticket
+creation is a one-liner.
+
+Works with any AI agent framework (LangChain, CrewAI, Claude Code, raw
+subprocess) and as a standalone CLI for humans and scripts.
 
 ## Why
 
 - **JSON by default** — every command outputs structured JSON that agents parse directly
-- **Friendly field names** — write `story_points` instead of `customfield_10036`
-- **Schema-aware** — syncs your instance's field config, resolves names and values automatically
+- **Friendly field names** — write `story_points` instead of `customfield_10036`, resolved automatically via your instance's schema
 - **Templates** — define issue defaults once, reuse across agents and workflows
-- **Shell completion** — field names and enum values from your live schema
+- **Shell completion** — field names and enum values from your live Jira schema
 - **Zero-config auth** — `jira auth login` handles OAuth, token refresh is transparent
+- **Agent-ready** — designed as a tool agents call, not a TUI humans click through
 
 ## Install
 

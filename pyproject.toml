@@ -1,7 +1,7 @@
 [project]
 name = "jira-genie"
 version = "0.2.0"
-description = "Jira Cloud client for AI agents and automation"
+description = "Your AI agent's interface to Jira Cloud. JSON in, JSON out."
 readme = "README.md"
 license = "MIT"
 authors = [
