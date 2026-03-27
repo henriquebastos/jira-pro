@@ -155,6 +155,12 @@ class TestResolveFields:
         result = resolve_fields({"description": adf}, SCHEMA_FIELDS)
         assert result == {"description": adf}
 
+    def test_markdown_description_with_formatting(self):
+        result = resolve_fields({"description": "**bold** text"}, SCHEMA_FIELDS)
+        content = result["description"]["content"][0]["content"]
+        assert content[0] == {"type": "text", "text": "bold", "marks": [{"type": "strong"}]}
+        assert content[1] == {"type": "text", "text": " text"}
+
     def test_multiple_fields(self):
         result = resolve_fields({"summary": "Fix", "story_points": 3, "team": "Backend"}, SCHEMA_FIELDS)
         assert result == {"summary": "Fix", "customfield_10036": 3, "customfield_10001": {"value": "Backend"}}

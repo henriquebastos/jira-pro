@@ -68,13 +68,7 @@ NAMED_ARRAY_FIELDS = {"components", "fixVersions", "versions"}
 ADF_FIELDS = {"description", "environment"}
 
 
-def text_to_adf(text):
-    """Wrap a plain string in minimal Atlassian Document Format (doc > paragraph > text)."""
-    return {
-        "type": "doc",
-        "version": 1,
-        "content": [{"type": "paragraph", "content": [{"type": "text", "text": text}]}],
-    }
+
 
 
 def resolve_fields(friendly, schema):
@@ -95,9 +89,10 @@ def resolve_fields(friendly, schema):
             result[field_id] = value
             continue
 
-        # ADF fields: wrap plain strings into minimal doc > paragraph > text
+        # ADF fields: convert Markdown strings to ADF
         if field_id in ADF_FIELDS and isinstance(value, str):
-            result[field_id] = text_to_adf(value)
+            from jira.adf import markdown_to_adf
+            result[field_id] = markdown_to_adf(value)
             continue
 
         # Expand based on type
