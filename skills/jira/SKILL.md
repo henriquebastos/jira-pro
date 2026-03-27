@@ -100,38 +100,37 @@ Returns: `{"id": "12345", "key": "DEV-125", "self": "https://..."}`.
 
 ### Setting descriptions
 
-Plain strings are auto-converted to Atlassian Document Format (ADF):
+Descriptions accept **Markdown** — it's auto-converted to Atlassian Document Format (ADF):
 
 ```bash
 jira issue create --json '{
   "project": "DEV",
   "issuetype": "Task",
   "summary": "Fix the auth flow",
-  "description": "Users are getting 401 errors after token refresh."
+  "description": "## Problem\n\nUsers are getting **401 errors** after token refresh.\n\n## Steps to reproduce\n\n1. Login normally\n2. Wait for token expiry\n3. Try any API call\n\n## Notes\n\n- Affects `PaymentService`\n- See [docs](https://example.com/auth)"
 }'
 ```
 
-For richer content (headings, lists, code blocks), pass the full ADF structure:
+Supported Markdown elements:
+- Headings (`#` through `######`)
+- Bold (`**text**`), italic (`*text*`), inline code (`` `text` ``), strikethrough (`~~text~~`)
+- Links (`[text](url)`)
+- Bullet lists (`- item`) and ordered lists (`1. item`), including nested
+- Code blocks (` ```language `)
+- Blockquotes (`> text`)
+- Horizontal rules (`---`)
+
+Plain text works too — it becomes a single paragraph.
+
+For pre-built ADF (rare), pass a dict — it goes through untouched:
 
 ```bash
 jira issue create --json '{
-  "project": "DEV",
-  "issuetype": "Task",
-  "summary": "Fix the auth flow",
-  "description": {
-    "type": "doc",
-    "version": 1,
-    "content": [
-      {
-        "type": "paragraph",
-        "content": [{"type": "text", "text": "Users are getting 401 errors after token refresh."}]
-      }
-    ]
-  }
+  "description": {"type": "doc", "version": 1, "content": [...]}
 }'
 ```
 
-Dict values pass through untouched — no double-wrapping.
+The same applies to the `environment` field.
 
 ### With a template
 
@@ -340,7 +339,7 @@ When using `--json` or `--set`, field names and values are resolved automaticall
 | `"team": "Backend"` | `"customfield_10001": {"value": "Backend"}` |
 | `"components": ["API"]` | `"components": [{"name": "API"}]` |
 | `"story_points": 5` | `"customfield_10036": 5` |
-| `"description": "plain text"` | auto-wrapped into ADF `doc > paragraph > text` |
+| `"description": "**Markdown** text"` | parsed as Markdown, converted to ADF |
 | `"description": {ADF doc}` | passed through as-is (dicts are never wrapped) |
 
 Use `--raw-payload` to bypass all resolution and send exact JSON to the API.
