@@ -1,3 +1,6 @@
+# Python imports
+from typing import ClassVar
+
 # Internal imports
 from jira.adf import markdown_to_adf
 
@@ -127,6 +130,115 @@ class TestLinks:
         marks = result["content"][0]["content"][0]["marks"]
         mark_types = {m["type"] for m in marks}
         assert mark_types == {"strong", "link"}
+
+
+class TestFullDocument:
+    """End-to-end: a realistic Markdown document using all supported features at once.
+
+    The expected ADF dict below serves as a reference for the complete mapping:
+    heading, paragraph, bold, italic, ordered list, inline code, link,
+    blockquote, strikethrough, rule, code block, bullet list, nested list.
+    """
+
+    MARKDOWN = (
+        "# Bug Report\n"
+        "\n"
+        "This is a **critical** issue with *authentication*.\n"
+        "\n"
+        "## Steps to reproduce\n"
+        "\n"
+        "1. Login with `admin` credentials\n"
+        "2. Call the [API](https://api.example.com/auth)\n"
+        "\n"
+        "## Workaround\n"
+        "\n"
+        "> Use the ~~old~~ new endpoint.\n"
+        "\n"
+        "---\n"
+        "\n"
+        "```python\ntoken = refresh()\n```\n"
+        "\n"
+        "- Check **bold in list**\n"
+        "  - Nested item\n"
+    )
+
+    EXPECTED_ADF: ClassVar[dict] = {
+        "type": "doc",
+        "version": 1,
+        "content": [
+            # --- heading ---
+            {"type": "heading", "attrs": {"level": 1}, "content": [
+                {"type": "text", "text": "Bug Report"},
+            ]},
+            # --- paragraph with bold + italic ---
+            {"type": "paragraph", "content": [
+                {"type": "text", "text": "This is a "},
+                {"type": "text", "text": "critical", "marks": [{"type": "strong"}]},
+                {"type": "text", "text": " issue with "},
+                {"type": "text", "text": "authentication", "marks": [{"type": "em"}]},
+                {"type": "text", "text": "."},
+            ]},
+            # --- h2 ---
+            {"type": "heading", "attrs": {"level": 2}, "content": [
+                {"type": "text", "text": "Steps to reproduce"},
+            ]},
+            # --- ordered list with inline code + link ---
+            {"type": "orderedList", "content": [
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [
+                        {"type": "text", "text": "Login with "},
+                        {"type": "text", "text": "admin", "marks": [{"type": "code"}]},
+                        {"type": "text", "text": " credentials"},
+                    ]},
+                ]},
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [
+                        {"type": "text", "text": "Call the "},
+                        {"type": "text", "text": "API", "marks": [
+                            {"type": "link", "attrs": {"href": "https://api.example.com/auth"}},
+                        ]},
+                    ]},
+                ]},
+            ]},
+            # --- h2 ---
+            {"type": "heading", "attrs": {"level": 2}, "content": [
+                {"type": "text", "text": "Workaround"},
+            ]},
+            # --- blockquote with strikethrough ---
+            {"type": "blockquote", "content": [
+                {"type": "paragraph", "content": [
+                    {"type": "text", "text": "Use the "},
+                    {"type": "text", "text": "old", "marks": [{"type": "strike"}]},
+                    {"type": "text", "text": " new endpoint."},
+                ]},
+            ]},
+            # --- rule ---
+            {"type": "rule"},
+            # --- code block with language ---
+            {"type": "codeBlock", "content": [
+                {"type": "text", "text": "token = refresh()\n"},
+            ], "attrs": {"language": "python"}},
+            # --- bullet list with bold + nested list ---
+            {"type": "bulletList", "content": [
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [
+                        {"type": "text", "text": "Check "},
+                        {"type": "text", "text": "bold in list", "marks": [{"type": "strong"}]},
+                    ]},
+                    {"type": "bulletList", "content": [
+                        {"type": "listItem", "content": [
+                            {"type": "paragraph", "content": [
+                                {"type": "text", "text": "Nested item"},
+                            ]},
+                        ]},
+                    ]},
+                ]},
+            ]},
+        ],
+    }
+
+    def test_all_features(self):
+        assert markdown_to_adf(self.MARKDOWN) == self.EXPECTED_ADF
 
 
 class TestLists:
