@@ -1,3 +1,29 @@
+## [0.3.0] - 2026-03-27
+
+### 🚀 Features
+
+- Auto-convert plain text description/environment to ADF #closes bean-3ecbcefb
+- Markdown to ADF block nodes — paragraph, heading, code block, blockquote, rule #closes bean-6bd8a8c9
+- Markdown to ADF inline marks — bold, italic, code, strikethrough, nested #closes bean-d2be6245
+- Markdown to ADF links with mark composition #closes bean-0cdcc25f
+- Markdown to ADF lists — bullet, ordered, nested #closes bean-dd90ce05
+- Wire markdown_to_adf into resolve_fields, remove text_to_adf #closes bean-4f738fa2
+
+### 📚 Documentation
+
+- Update CHANGELOG.md
+- Update skill docs for Markdown description support #closes bean-21af5432
+
+### 🧪 Testing
+
+- Add full-document integration test exercising all ADF features at once
+
+### ⚙️ Miscellaneous Tasks
+
+- Test against Python 3.11, 3.12, 3.13 matrix, relax requires-python to >=3.11
+- Add Python 3.14 to test matrix
+- Add mistune dependency for Markdown to ADF conversion #closes bean-252df3d4
+- Bump to v0.3.0
 ## [0.2.2] - 2026-03-27
 
 ### 🐛 Bug Fixes
