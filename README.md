@@ -26,12 +26,14 @@ subprocess) and as a standalone CLI for humans and scripts.
 ## Install
 
 ```bash
+# Homebrew
+brew tap henriquebastos/tap
+brew install jira-genie
+
+# Or with uv
 uv tool install jira-genie
-```
 
-Or from source:
-
-```bash
+# Or from source
 git clone https://github.com/henriquebastos/jira-genie.git
 cd jira-genie
 uv tool install -e .
