@@ -23,6 +23,7 @@ def parse(argv=None):
 
     # auth subcommands
     auth_parser = subparsers.add_parser("auth")
+    auth_parser.set_defaults(subparser=auth_parser)
     auth_sub = auth_parser.add_subparsers(dest="subcommand")
     auth_login = auth_sub.add_parser("login")
     auth_login.add_argument("--client-id", default=None, help="OAuth client ID (overrides default)")
@@ -32,6 +33,7 @@ def parse(argv=None):
 
     # fields subcommands
     fields_parser = subparsers.add_parser("fields")
+    fields_parser.set_defaults(subparser=fields_parser)
     fields_sub = fields_parser.add_subparsers(dest="subcommand")
 
     fields_sync = fields_sub.add_parser("sync")
@@ -46,6 +48,7 @@ def parse(argv=None):
 
     # issue subcommands
     issue_parser = subparsers.add_parser("issue")
+    issue_parser.set_defaults(subparser=issue_parser)
     issue_sub = issue_parser.add_subparsers(dest="subcommand")
 
     issue_get = issue_sub.add_parser("get")
@@ -90,6 +93,7 @@ def parse(argv=None):
 
     # bulk subcommands
     bulk_parser = subparsers.add_parser("bulk")
+    bulk_parser.set_defaults(subparser=bulk_parser)
     bulk_sub = bulk_parser.add_subparsers(dest="subcommand")
 
     bulk_edit = bulk_sub.add_parser("edit")
@@ -98,6 +102,7 @@ def parse(argv=None):
 
     # template subcommands
     template_parser = subparsers.add_parser("template")
+    template_parser.set_defaults(subparser=template_parser)
     template_sub = template_parser.add_subparsers(dest="subcommand")
 
     template_sub.add_parser("list")
@@ -121,6 +126,7 @@ def parse(argv=None):
 
     # sprint subcommands
     sprint_parser = subparsers.add_parser("sprint")
+    sprint_parser.set_defaults(subparser=sprint_parser)
     sprint_sub = sprint_parser.add_subparsers(dest="subcommand")
 
     sprint_current = sprint_sub.add_parser("current")
@@ -136,6 +142,7 @@ def parse(argv=None):
 
     # board subcommands
     board_parser = subparsers.add_parser("board")
+    board_parser.set_defaults(subparser=board_parser)
     board_sub = board_parser.add_subparsers(dest="subcommand")
 
     board_list = board_sub.add_parser("list")
@@ -146,6 +153,7 @@ def parse(argv=None):
 
     # user subcommands
     user_parser = subparsers.add_parser("user")
+    user_parser.set_defaults(subparser=user_parser)
     user_sub = user_parser.add_subparsers(dest="subcommand")
 
     user_search = user_sub.add_parser("search")
@@ -155,6 +163,7 @@ def parse(argv=None):
 
     # completion subcommand
     completion_parser = subparsers.add_parser("completion")
+    completion_parser.set_defaults(subparser=completion_parser)
     completion_sub = completion_parser.add_subparsers(dest="subcommand")
     completion_sub.add_parser("install", help="Show shell setup instructions")
     completion_sub.add_parser("bash", help="Output bash completion script")
@@ -168,6 +177,11 @@ def parse(argv=None):
 def cli(argv=None):
     """Entry point. Parses, dispatches, handles I/O."""
     args = parse(argv)
+
+    # Show help when subcommand is missing
+    if args.command and not getattr(args, "subcommand", None) and args.command != "search":
+        args.subparser.print_help()
+        return
 
     handlers = {
         "auth": _handle_auth,
