@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.jpg" alt="jira-genie" width="100%">
+</p>
+
 # jira-genie 🧞
 
 Your AI agent's interface to Jira Cloud. JSON in, JSON out.
