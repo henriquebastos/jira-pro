@@ -1,6 +1,6 @@
 [project]
 name = "jira-genie"
-version = "0.2.1"
+version = "0.2.2"
 description = "Your AI agent's interface to Jira Cloud. JSON in, JSON out."
 readme = "README.md"
 license = "MIT"
@@ -14,11 +14,11 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/jira"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [project.scripts]
 jira = "jira.cli:cli"
