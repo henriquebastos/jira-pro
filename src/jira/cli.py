@@ -16,7 +16,7 @@ DEFAULT_CLIENT_SECRET = "ATOA0mBJCckMTjQhYcvyiM95S2kH_M6RfZjg2H1XZPbPwMj_QYp4q45
 
 def parse(argv=None):
     """Pure parsing. Returns a Namespace. No I/O."""
-    parser = argparse.ArgumentParser(prog="jira", description="Jira Cloud CLI")
+    parser = argparse.ArgumentParser(prog="jira", description="Jira Genie — your AI agent's interface to Jira Cloud")
     parser.add_argument("--instance", help="Jira instance (site name)")
 
     subparsers = parser.add_subparsers(dest="command")
@@ -60,12 +60,14 @@ def parse(argv=None):
     issue_edit.add_argument("key", help="Issue key")
     issue_edit.add_argument("--set", action="append", help="key=value field").completer = FieldSetCompleter()
     issue_edit.add_argument("--json", help="JSON override string")
+    issue_edit.add_argument("--body-file", help="Read description from file")
     issue_edit.add_argument("--raw-payload", help="Raw JSON payload (bypass resolution)")
 
     issue_create = issue_sub.add_parser("create")
     issue_create.add_argument("--summary", help="Issue summary")
     issue_create.add_argument("--template", help="Template name").completer = TemplateCompleter()
     issue_create.add_argument("--json", help="JSON override string")
+    issue_create.add_argument("--body-file", help="Read description from file")
     issue_create.add_argument("--set", action="append", help="key=value field").completer = FieldSetCompleter()
     issue_create.add_argument("--raw-payload", help="Raw JSON payload (bypass resolution)")
 
@@ -79,7 +81,8 @@ def parse(argv=None):
 
     issue_comment = issue_sub.add_parser("comment")
     issue_comment.add_argument("key", help="Issue key")
-    issue_comment.add_argument("body", help="Comment text")
+    issue_comment.add_argument("body", nargs="?", help="Comment text")
+    issue_comment.add_argument("--body-file", help="Read comment body from file")
 
     issue_link = issue_sub.add_parser("link")
     issue_link.add_argument("inward_key", help="Inward issue key")
@@ -161,6 +164,23 @@ def parse(argv=None):
 
     user_sub.add_parser("me")
 
+    # skill subcommands
+    skill_parser = subparsers.add_parser("skill", help="Install/uninstall the jira agent skill")
+    skill_parser.set_defaults(subparser=skill_parser)
+    skill_sub = skill_parser.add_subparsers(dest="subcommand")
+
+    targets = ["agents", "pi", "claude", "codex"]
+
+    skill_install = skill_sub.add_parser("install", help="Install skill for AI coding tools")
+    skill_install.add_argument("--all", dest="install_all", action="store_true", help="Auto-detect and install to all")
+    skill_install.add_argument("--target", action="append", choices=targets, help="Specific tool (repeatable)")
+    skill_install.add_argument("--dry-run", action="store_true", help="Show what would change")
+
+    skill_uninstall = skill_sub.add_parser("uninstall", help="Remove skill from AI coding tools")
+    skill_uninstall.add_argument("--all", dest="install_all", action="store_true", help="Auto-detect and remove")
+    skill_uninstall.add_argument("--target", action="append", choices=targets, help="Specific tool (repeatable)")
+    skill_uninstall.add_argument("--dry-run", action="store_true", help="Show what would change")
+
     # completion subcommand
     completion_parser = subparsers.add_parser("completion")
     completion_parser.set_defaults(subparser=completion_parser)
@@ -189,6 +209,7 @@ def cli(argv=None):
         "issue": _handle_issue,
         "search": _handle_search,
         "user": _handle_user,
+        "skill": _handle_skill,
         "completion": _handle_completion,
     }
     handler = handlers.get(args.command)
@@ -287,6 +308,8 @@ def _handle_issue(args):
             fields = _parse_set_flags(args.set)
             if getattr(args, "json", None):
                 fields = {**json.loads(args.json), **fields}
+            if getattr(args, "body_file", None):
+                fields["description"] = _read_file(args.body_file)
             from jira.schema import resolve_fields
             schema = _load_schema(args.instance)
             payload = {"fields": resolve_fields(fields, schema)}
@@ -309,6 +332,8 @@ def _handle_issue(args):
                 template = load_template(template_name, instance_dir / "templates")
             json_override = json.loads(args.json) if getattr(args, "json", None) else None
             cli_flags = _parse_set_flags(getattr(args, "set", None))
+            if getattr(args, "body_file", None):
+                cli_flags["description"] = _read_file(args.body_file)
             if getattr(args, "summary", None):
                 cli_flags["summary"] = args.summary
             resolved = build_issue_fields(template, json_override, cli_flags, schema)
@@ -322,7 +347,8 @@ def _handle_issue(args):
         client.issue.assign(args.key, args.assignee)
         print(json.dumps({"message": f"Assigned {args.key}"}))
     elif args.subcommand == "comment":
-        result = client.issue.add_comment(args.key, args.body)
+        body = _read_body(args)
+        result = client.issue.add_comment(args.key, body)
         print(json.dumps(result, indent=2))
     elif args.subcommand == "link":
         client.issue.link(args.inward_key, args.outward_key, args.link_type)
@@ -349,6 +375,67 @@ def _handle_user(args):
         print(json.dumps(client.user.search(args.query), indent=2))
 
 
+def _handle_skill(args):
+    from jira.skill import TARGETS, detect_targets, install, uninstall
+
+    if args.subcommand == "install":
+        if not args.install_all and not args.target:
+            # Show help: list available targets and their status
+            detected = detect_targets()
+            print("Usage: jira skill install --all | --target <name>")
+            print()
+            print("Targets:")
+            for name, info in TARGETS.items():
+                status = "detected" if name in detected else "not found"
+                print(f"  {name:10s} {info['label']:30s} ({status})")
+            print()
+            print("Options:")
+            print("  --all       Auto-detect installed tools and install to all")
+            print("  --target    Install to a specific tool (repeatable)")
+            print("  --dry-run   Show what would change without doing it")
+            return
+
+        targets = detect_targets() if args.install_all else args.target
+        if not targets:
+            print("No supported tools detected. Use --target to install manually.")
+            return
+
+        dry_run = getattr(args, "dry_run", False)
+        actions = install(targets, dry_run=dry_run)
+
+        prefix = "[dry-run] " if dry_run else ""
+        for a in actions:
+            verb = "Overwrite" if a["action"] == "overwrite" else "Create"
+            print(f"{prefix}{verb} {a['path']}  ({a['label']})")
+
+        if not dry_run:
+            print(f"\n✓ Installed jira skill to {len(actions)} target(s)")
+
+    elif args.subcommand == "uninstall":
+        if not args.install_all and not args.target:
+            print("Usage: jira skill uninstall --all | --target <name>")
+            return
+
+        targets = detect_targets() if args.install_all else args.target
+        if not targets:
+            print("No supported tools detected.")
+            return
+
+        dry_run = getattr(args, "dry_run", False)
+        actions = uninstall(targets, dry_run=dry_run)
+
+        if not actions:
+            print("Nothing to remove.")
+            return
+
+        prefix = "[dry-run] " if dry_run else ""
+        for a in actions:
+            print(f"{prefix}Remove {a['path']}  ({a['label']})")
+
+        if not dry_run:
+            print(f"\n✓ Removed jira skill from {len(actions)} target(s)")
+
+
 def _handle_completion(args):
     if args.subcommand == "install":
         import os
@@ -370,6 +457,24 @@ def _handle_completion(args):
     elif args.subcommand == "fish":
         import subprocess
         subprocess.run(["register-python-argcomplete", "--shell", "fish", "jira"])
+
+
+def _read_file(path):
+    """Read text content from a file path."""
+    from pathlib import Path
+    return Path(path).read_text()
+
+
+def _read_body(args):
+    """Read body from --body-file or positional arg."""
+    body_file = getattr(args, "body_file", None)
+    body = getattr(args, "body", None)
+    if body_file:
+        return _read_file(body_file)
+    if body:
+        return body
+    print(json.dumps({"error": "Provide body as argument or --body-file"}), file=sys.stderr)
+    sys.exit(1)
 
 
 def _parse_set_flags(set_args):

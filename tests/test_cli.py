@@ -82,6 +82,10 @@ class TestParseIssue:
         args = parse(["issue", "edit", "DEV-123", "--json", '{"team": "Backend"}'])
         assert args.json == '{"team": "Backend"}'
 
+    def test_issue_edit_body_file(self):
+        args = parse(["issue", "edit", "DEV-123", "--body-file", "/tmp/desc.md"])
+        assert args.body_file == "/tmp/desc.md"
+
     def test_issue_edit_raw(self):
         args = parse(["issue", "edit", "DEV-123", "--raw-payload", '{"fields": {}}'])
         assert args.raw_payload == '{"fields": {}}'
@@ -146,6 +150,10 @@ class TestParseTemplate:
         args = parse(["issue", "create", "--raw-payload", '{"fields": {}}'])
         assert args.raw_payload == '{"fields": {}}'
 
+    def test_issue_create_body_file(self):
+        args = parse(["issue", "create", "--body-file", "/tmp/desc.md", "--summary", "Title"])
+        assert args.body_file == "/tmp/desc.md"
+
 
 class TestParseSprint:
     def test_sprint_current(self):
@@ -197,6 +205,10 @@ class TestParseIssueOps:
     def test_issue_comment(self):
         args = parse(["issue", "comment", "DEV-123", "Deployed"])
         assert args.body == "Deployed"
+
+    def test_issue_comment_body_file(self):
+        args = parse(["issue", "comment", "DEV-123", "--body-file", "/tmp/comment.md"])
+        assert args.body_file == "/tmp/comment.md"
 
     def test_issue_link(self):
         args = parse(["issue", "link", "DEV-1", "DEV-2", "--type", "blocks"])
