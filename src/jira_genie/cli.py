@@ -305,70 +305,95 @@ def _handle_fields(args):
 
 def _handle_issue(args):
     from jira_genie.client import JiraClient
-    from jira_genie.formatters import format_issue
 
     client = JiraClient.from_config(instance=args.instance)
-    if args.subcommand == "get":
-        fields = args.fields.split(",") if getattr(args, "fields", None) else None
-        result = client.issue.get(args.key, fields=fields)
-        if getattr(args, "raw", False):
-            print(json.dumps(result, indent=2))
-        else:
-            print(json.dumps(format_issue(result), indent=2))
-    elif args.subcommand == "edit":
-        if getattr(args, "raw_payload", None):
-            payload = json.loads(args.raw_payload)
-        else:
-            fields = _parse_set_flags(args.set)
-            if getattr(args, "json", None):
-                fields = {**json.loads(args.json), **fields}
-            if getattr(args, "body_file", None):
-                fields["description"] = _read_file(args.body_file)
-            if getattr(args, "description", None):
-                fields["description"] = args.description
-            from jira_genie.schema import resolve_fields
-            schema = _load_schema(args.instance)
-            payload = {"fields": resolve_fields(fields, schema)}
-        client.issue.edit(args.key, payload)
-        print(json.dumps({"message": f"Updated {args.key}"}))
-    elif args.subcommand == "create":
-        if getattr(args, "raw_payload", None):
-            payload = json.loads(args.raw_payload)
-        else:
-            from jira_genie.templates import build_issue_fields, get_default, load_template
-            schema = _load_schema(args.instance)
-            template = None
-            template_name = getattr(args, "template", None)
-            if not template_name:
-                instance_dir = _get_instance_dir(args.instance)
-                config_file = instance_dir / "config.json"
-                template_name = get_default(config_file)
-            if template_name:
-                instance_dir = _get_instance_dir(args.instance)
-                template = load_template(template_name, instance_dir / "templates")
-            json_override = json.loads(args.json) if getattr(args, "json", None) else None
-            cli_flags = _parse_set_flags(getattr(args, "set", None))
-            if getattr(args, "body_file", None):
-                cli_flags["description"] = _read_file(args.body_file)
-            if getattr(args, "summary", None):
-                cli_flags["summary"] = args.summary
-            resolved = build_issue_fields(template, json_override, cli_flags, schema)
-            payload = {"fields": resolved}
-        result = client.issue.create(payload)
+    issue_handlers = {
+        "get": _handle_issue_get,
+        "edit": _handle_issue_edit,
+        "create": _handle_issue_create,
+        "transition": _handle_issue_transition,
+        "assign": _handle_issue_assign,
+        "comment": _handle_issue_comment,
+        "link": _handle_issue_link,
+    }
+    issue_handlers[args.subcommand](args, client)
+
+
+def _handle_issue_get(args, client):
+    from jira_genie.formatters import format_issue
+
+    fields = args.fields.split(",") if getattr(args, "fields", None) else None
+    result = client.issue.get(args.key, fields=fields)
+    if getattr(args, "raw", False):
         print(json.dumps(result, indent=2))
-    elif args.subcommand == "transition":
-        client.issue.transition(args.key, args.status)
-        print(json.dumps({"message": f"Transitioned {args.key} to {args.status}"}))
-    elif args.subcommand == "assign":
-        client.issue.assign(args.key, args.assignee)
-        print(json.dumps({"message": f"Assigned {args.key}"}))
-    elif args.subcommand == "comment":
-        body = _read_body(args)
-        result = client.issue.add_comment(args.key, body)
-        print(json.dumps(result, indent=2))
-    elif args.subcommand == "link":
-        client.issue.link(args.inward_key, args.outward_key, args.link_type)
-        print(json.dumps({"message": f"Linked {args.inward_key} → {args.outward_key}"}))
+    else:
+        print(json.dumps(format_issue(result), indent=2))
+
+
+def _handle_issue_edit(args, client):
+    if getattr(args, "raw_payload", None):
+        payload = json.loads(args.raw_payload)
+    else:
+        fields = _parse_set_flags(args.set)
+        if getattr(args, "json", None):
+            fields = {**json.loads(args.json), **fields}
+        if getattr(args, "body_file", None):
+            fields["description"] = _read_file(args.body_file)
+        if getattr(args, "description", None):
+            fields["description"] = args.description
+        from jira_genie.schema import resolve_fields
+        schema = _load_schema(args.instance)
+        payload = {"fields": resolve_fields(fields, schema)}
+    client.issue.edit(args.key, payload)
+    print(json.dumps({"message": f"Updated {args.key}"}))
+
+
+def _handle_issue_create(args, client):
+    if getattr(args, "raw_payload", None):
+        payload = json.loads(args.raw_payload)
+    else:
+        from jira_genie.templates import build_issue_fields, get_default, load_template
+        schema = _load_schema(args.instance)
+        template = None
+        template_name = getattr(args, "template", None)
+        if not template_name:
+            instance_dir = _get_instance_dir(args.instance)
+            config_file = instance_dir / "config.json"
+            template_name = get_default(config_file)
+        if template_name:
+            instance_dir = _get_instance_dir(args.instance)
+            template = load_template(template_name, instance_dir / "templates")
+        json_override = json.loads(args.json) if getattr(args, "json", None) else None
+        cli_flags = _parse_set_flags(getattr(args, "set", None))
+        if getattr(args, "body_file", None):
+            cli_flags["description"] = _read_file(args.body_file)
+        if getattr(args, "summary", None):
+            cli_flags["summary"] = args.summary
+        resolved = build_issue_fields(template, json_override, cli_flags, schema)
+        payload = {"fields": resolved}
+    result = client.issue.create(payload)
+    print(json.dumps(result, indent=2))
+
+
+def _handle_issue_transition(args, client):
+    client.issue.transition(args.key, args.status)
+    print(json.dumps({"message": f"Transitioned {args.key} to {args.status}"}))
+
+
+def _handle_issue_assign(args, client):
+    client.issue.assign(args.key, args.assignee)
+    print(json.dumps({"message": f"Assigned {args.key}"}))
+
+
+def _handle_issue_comment(args, client):
+    body = _read_body(args)
+    result = client.issue.add_comment(args.key, body)
+    print(json.dumps(result, indent=2))
+
+
+def _handle_issue_link(args, client):
+    client.issue.link(args.inward_key, args.outward_key, args.link_type)
+    print(json.dumps({"message": f"Linked {args.inward_key} → {args.outward_key}"}))
 
 
 def _handle_search(args):
