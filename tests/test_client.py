@@ -2,9 +2,34 @@
 import pytest
 
 # Internal imports
-from jira_genie.client import BoardSubClient, IssueSubClient, SearchSubClient, SprintSubClient, UserSubClient
+from jira_genie.client import (
+    BoardSubClient,
+    IssueSubClient,
+    JiraSession,
+    SearchSubClient,
+    SprintSubClient,
+    UserSubClient,
+)
 
 BASE_URL = "https://api.atlassian.com/ex/jira/cloud-abc/"
+
+
+class TestJiraSession:
+    def test_get_skips_content_type(self, responses):
+        """GET without body should not set Content-Type: application/json."""
+        responses.add("GET", f"{BASE_URL}test", json={"ok": True})
+        session = JiraSession(base_url=BASE_URL)
+        session.request("GET", "test")
+        req = responses.calls[0].request
+        assert "application/json" not in (req.headers.get("Content-Type") or "")
+
+    def test_post_sets_content_type(self, responses):
+        """POST with JSON body should set Content-Type."""
+        responses.add("POST", f"{BASE_URL}test", json={"ok": True})
+        session = JiraSession(base_url=BASE_URL)
+        session.request("POST", "test", json={"key": "value"})
+        req = responses.calls[0].request
+        assert "application/json" in req.headers.get("Content-Type", "")
 
 
 @pytest.fixture()
@@ -68,6 +93,22 @@ class TestSearchSubClient:
         result = search.jql("project = DEV")
         assert len(result) == 2
         assert result[0]["key"] == "DEV-1"
+
+    def test_jql_with_string_fields(self, search, responses):
+        responses.add("GET", f"{BASE_URL}rest/api/3/search/jql", json={
+            "issues": [{"key": "DEV-1"}], "total": 1,
+        })
+        search.jql("project = DEV", fields="summary,status")
+        req = responses.calls[0].request
+        assert "fields=summary%2Cstatus" in req.url
+
+    def test_jql_all_with_fields(self, search, responses):
+        responses.add("GET", f"{BASE_URL}rest/api/3/search/jql", json={
+            "issues": [{"key": "DEV-1"}], "total": 1,
+        })
+        search.jql_all("project = DEV", fields=["summary"])
+        req = responses.calls[0].request
+        assert "fields=summary" in req.url
 
     def test_jql_all_paginates(self, search, responses):
         responses.add("GET", f"{BASE_URL}rest/api/3/search/jql", json={
@@ -135,6 +176,15 @@ class TestSprintSubClient:
         assert len(result) == 2
 
 
+    def test_issues_with_fields(self, sprint, responses):
+        responses.add("GET", f"{AGILE_URL}rest/agile/1.0/sprint/42/issue", json={
+            "issues": [{"key": "DEV-1"}],
+        })
+        sprint.issues(42, fields=["summary", "status"])
+        req = responses.calls[0].request
+        assert "fields=summary%2Cstatus" in req.url
+
+
 class TestBoardSubClient:
     def test_get(self, board, responses):
         responses.add("GET", f"{AGILE_URL}rest/agile/1.0/board/10", json={"id": 10, "name": "DEV board"})
@@ -154,6 +204,14 @@ class TestBoardSubClient:
         })
         result = board.backlog(10)
         assert len(result) == 1
+
+    def test_backlog_with_fields(self, board, responses):
+        responses.add("GET", f"{AGILE_URL}rest/agile/1.0/board/10/backlog", json={
+            "issues": [{"key": "DEV-99"}],
+        })
+        board.backlog(10, fields=["summary"])
+        req = responses.calls[0].request
+        assert "fields=summary" in req.url
 
 
 @pytest.fixture()
@@ -176,6 +234,13 @@ class TestUserSubClient:
         assert len(result) == 1
 
 
+    def test_get_passes_expand_param(self, issue, responses):
+        responses.add("GET", f"{BASE_URL}rest/api/3/issue/DEV-123", json={"key": "DEV-123"})
+        issue.get("DEV-123", expand=["changelog"])
+        req = responses.calls[0].request
+        assert "expand=changelog" in req.url
+
+
 class TestIssueSubClientExtended:
     def test_get_transitions(self, issue, responses):
         responses.add("GET", f"{BASE_URL}rest/api/3/issue/DEV-123/transitions", json={
@@ -184,6 +249,14 @@ class TestIssueSubClientExtended:
         result = issue.get_transitions("DEV-123")
         assert len(result) == 1
         assert result[0]["name"] == "In Progress"
+
+    def test_transition_raises_on_invalid_status(self, issue, responses):
+        responses.add("GET", f"{BASE_URL}rest/api/3/issue/DEV-123/transitions", json={
+            "transitions": [{"id": "31", "name": "In Progress"}],
+        })
+        import pytest
+        with pytest.raises(ValueError, match="Transition 'Done' not found"):
+            issue.transition("DEV-123", "Done")
 
     def test_transition(self, issue, responses):
         responses.add("GET", f"{BASE_URL}rest/api/3/issue/DEV-123/transitions", json={
