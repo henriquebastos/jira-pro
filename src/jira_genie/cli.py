@@ -103,6 +103,7 @@ def parse(argv=None):
     bulk_edit = bulk_sub.add_parser("edit")
     bulk_edit.add_argument("keys", nargs="+", help="Issue keys")
     bulk_edit.add_argument("--set", action="append", help="key=value field").completer = FieldSetCompleter()
+    bulk_edit.add_argument("--json", help="JSON override string")
 
     # template subcommands
     template_parser = subparsers.add_parser("template")
@@ -209,6 +210,7 @@ def cli(argv=None):
         "fields": _handle_fields,
         "issue": _handle_issue,
         "search": _handle_search,
+        "bulk": _handle_bulk,
         "user": _handle_user,
         "skill": _handle_skill,
         "completion": _handle_completion,
@@ -376,6 +378,24 @@ def _handle_user(args):
         print(json.dumps(client.user.myself(), indent=2))
     elif args.subcommand == "search":
         print(json.dumps(client.user.search(args.query), indent=2))
+
+
+def _handle_bulk(args):
+    from jira_genie.client import JiraClient
+
+    client = JiraClient.from_config(instance=args.instance)
+    if args.subcommand == "edit":
+        fields = _parse_set_flags(args.set)
+        if getattr(args, "json", None):
+            fields = {**json.loads(args.json), **fields}
+        from jira_genie.schema import resolve_fields
+        schema = _load_schema(args.instance)
+        payload = {"fields": resolve_fields(fields, schema)}
+        results = []
+        for key in args.keys:
+            client.issue.edit(key, payload)
+            results.append({"key": key, "message": f"Updated {key}"})
+        print(json.dumps(results, indent=2))
 
 
 def _handle_skill(args):

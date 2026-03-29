@@ -109,6 +109,10 @@ class TestParseIssue:
         assert args.keys == ["DEV-1", "DEV-2"]
         assert args.set == ["parent=DEV-100"]
 
+    def test_bulk_edit_with_json(self):
+        args = parse(["bulk", "edit", "DEV-1", "DEV-2", "--json", '{"team": "Backend"}'])
+        assert args.json == '{"team": "Backend"}'
+
 
 class TestParseTemplate:
     def test_template_list(self):
