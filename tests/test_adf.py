@@ -2,7 +2,7 @@
 from typing import ClassVar
 
 # Internal imports
-from jira.adf import markdown_to_adf
+from jira.adf import adf_to_markdown, markdown_to_adf
 
 
 class TestBlockNodes:
@@ -281,3 +281,71 @@ class TestLists:
         assert first_item["content"][1]["type"] == "bulletList"
         nested_item = first_item["content"][1]["content"][0]
         assert nested_item["content"][0] == {"type": "paragraph", "content": [{"type": "text", "text": "child"}]}
+
+
+class TestAdfToText:
+    """ADF → readable text round-trip."""
+
+    def test_plain_paragraph(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "paragraph", "content": [{"type": "text", "text": "Hello world"}]},
+        ]}
+        assert adf_to_markdown(adf) == "Hello world"
+
+    def test_heading(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Title"}]},
+        ]}
+        assert adf_to_markdown(adf) == "## Title"
+
+    def test_bold_and_code_marks(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "paragraph", "content": [
+                {"type": "text", "text": "bold", "marks": [{"type": "strong"}]},
+                {"type": "text", "text": " and "},
+                {"type": "text", "text": "code", "marks": [{"type": "code"}]},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "**bold** and `code`"
+
+    def test_bullet_list(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "bulletList", "content": [
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "one"}]},
+                ]},
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "two"}]},
+                ]},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "- one\n- two"
+
+    def test_code_block(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "codeBlock", "attrs": {"language": "python"}, "content": [
+                {"type": "text", "text": "print('hi')"},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "```python\nprint('hi')\n```"
+
+    def test_link_mark(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "paragraph", "content": [
+                {"type": "text", "text": "click here", "marks": [
+                    {"type": "link", "attrs": {"href": "https://example.com"}},
+                ]},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "[click here](https://example.com)"
+
+    def test_none_returns_empty(self):
+        assert adf_to_markdown(None) == ""
+
+    def test_roundtrip_markdown(self):
+        """Markdown → ADF → text should preserve key content."""
+        md = "## Problem\n\nUsers get **401 errors** after refresh."
+        adf = markdown_to_adf(md)
+        text = adf_to_markdown(adf)
+        assert "## Problem" in text
+        assert "**401 errors**" in text

@@ -1,7 +1,7 @@
 def format_issue(raw):
     """Raw Jira issue → clean {key, summary, status, assignee, ...}"""
     fields = raw.get("fields", {})
-    return {
+    result = {
         "key": raw["key"],
         "summary": fields.get("summary"),
         "status": (fields.get("status") or {}).get("name"),
@@ -9,6 +9,13 @@ def format_issue(raw):
         "priority": (fields.get("priority") or {}).get("name"),
         "type": (fields.get("issuetype") or {}).get("name"),
     }
+    description = fields.get("description")
+    if description and isinstance(description, dict):
+        from jira.adf import adf_to_markdown
+        result["description"] = adf_to_markdown(description)
+    else:
+        result["description"] = None
+    return result
 
 
 def format_issue_list(raw_issues):

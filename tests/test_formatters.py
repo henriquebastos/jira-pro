@@ -50,6 +50,48 @@ class TestFormatIssue:
         assert result["assignee"] is None
 
 
+    def test_includes_description_as_text(self):
+        raw = {
+            "key": "DEV-123",
+            "fields": {
+                "summary": "Fix the bug",
+                "status": {"name": "To Do"},
+                "issuetype": {"name": "Task"},
+                "description": {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "heading",
+                            "attrs": {"level": 2},
+                            "content": [{"type": "text", "text": "Problem"}],
+                        },
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {"type": "text", "text": "Users get "},
+                                {"type": "text", "text": "401 errors", "marks": [{"type": "strong"}]},
+                                {"type": "text", "text": " after refresh."},
+                            ],
+                        },
+                    ],
+                },
+            },
+        }
+        result = format_issue(raw)
+        assert "description" in result
+        assert "## Problem" in result["description"]
+        assert "**401 errors**" in result["description"]
+
+    def test_description_none_when_missing(self):
+        raw = {
+            "key": "DEV-456",
+            "fields": {"summary": "No desc", "description": None},
+        }
+        result = format_issue(raw)
+        assert result["description"] is None
+
+
 class TestFormatIssueList:
     def test_transforms_list(self):
         raw_issues = [
