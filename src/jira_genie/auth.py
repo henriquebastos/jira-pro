@@ -16,7 +16,7 @@ from requestspro.sessions import ProSession
 from requestspro.token import TokenStore
 
 # Internal imports
-from jira.cache import FileCache
+from jira_genie.cache import FileCache
 
 PKCE_BYTES = 32
 

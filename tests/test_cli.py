@@ -1,5 +1,5 @@
 # Internal imports
-from jira.cli import parse
+from jira_genie.cli import parse
 
 
 class TestParseAuth:

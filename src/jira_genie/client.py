@@ -54,7 +54,7 @@ class IssueSubClient(Client):
         return response.json() if response.content else None
 
     def add_comment(self, issue_key, body):
-        from jira.adf import markdown_to_adf
+        from jira_genie.adf import markdown_to_adf
         adf_body = markdown_to_adf(body) if isinstance(body, str) else body
         response = self.session.request("POST", f"rest/api/3/issue/{issue_key}/comment", json={"body": adf_body})
         response.raise_for_status()
@@ -164,9 +164,9 @@ class JiraClient(MainClient):
 
         from requestspro.token import ExpireValue, TokenStore
 
-        from jira.auth import JiraAuth
-        from jira.cache import FileCache
-        from jira.config import discover_instance_dir
+        from jira_genie.auth import JiraAuth
+        from jira_genie.cache import FileCache
+        from jira_genie.config import discover_instance_dir
 
         instance_dir = discover_instance_dir(instance=instance)
         config = json.loads((instance_dir / "config.json").read_text())

@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import pytest
 
 # Internal imports
-from jira.cache import FileCache
+from jira_genie.cache import FileCache
 
 
 @pytest.fixture()

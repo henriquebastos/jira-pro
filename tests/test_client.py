@@ -2,7 +2,7 @@
 import pytest
 
 # Internal imports
-from jira.client import BoardSubClient, IssueSubClient, SearchSubClient, SprintSubClient, UserSubClient
+from jira_genie.client import BoardSubClient, IssueSubClient, SearchSubClient, SprintSubClient, UserSubClient
 
 BASE_URL = "https://api.atlassian.com/ex/jira/cloud-abc/"
 

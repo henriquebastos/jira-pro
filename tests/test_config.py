@@ -5,7 +5,7 @@ import json
 import pytest
 
 # Internal imports
-from jira.config import ConfigError, discover_instance_dir
+from jira_genie.config import ConfigError, discover_instance_dir
 
 
 def make_instance(base_dir, cloud_id, site):

@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 # Internal imports
-from jira.schema import resolve_fields
+from jira_genie.schema import resolve_fields
 
 
 class TemplateError(Exception):

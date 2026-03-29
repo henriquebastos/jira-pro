@@ -2,7 +2,7 @@
 from typing import ClassVar
 
 # Internal imports
-from jira.adf import adf_to_markdown, markdown_to_adf
+from jira_genie.adf import adf_to_markdown, markdown_to_adf
 
 
 class TestBlockNodes:

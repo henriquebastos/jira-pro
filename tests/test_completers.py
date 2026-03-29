@@ -1,7 +1,7 @@
 # Python imports
 
 # Internal imports
-from jira.completers import complete_field_set, complete_template
+from jira_genie.completers import complete_field_set, complete_template
 
 SCHEMA_FIELDS = {
     "summary": {"id": "summary", "type": "string", "system": True},

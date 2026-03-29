@@ -1,5 +1,5 @@
 # Internal imports
-from jira.formatters import format_issue, format_issue_list, format_sprint, format_transition
+from jira_genie.formatters import format_issue, format_issue_list, format_sprint, format_transition
 
 
 class TestFormatIssue:

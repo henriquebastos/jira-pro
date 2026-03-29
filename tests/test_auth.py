@@ -11,8 +11,8 @@ import requests as http
 from requestspro.token import ExpireValue, TokenStore
 
 # Internal imports
-from jira.auth import JiraAuth, JiraAuthError, build_authorize_url, generate_pkce, login, wait_for_callback
-from jira.cache import FileCache
+from jira_genie.auth import JiraAuth, JiraAuthError, build_authorize_url, generate_pkce, login, wait_for_callback
+from jira_genie.cache import FileCache
 
 
 def make_auth(tmp_path, refresh_token=None):
@@ -112,7 +112,7 @@ class TestExchangeAndDiscover:
             "refresh_expires_in": 86400,
         })
 
-        from jira.auth import exchange_code
+        from jira_genie.auth import exchange_code
         result = exchange_code(
             code="auth-code",
             client_id="client-id",
@@ -130,7 +130,7 @@ class TestExchangeAndDiscover:
     def test_exchange_code_raises_on_failure(self, responses):
         responses.add("POST", JiraAuth.TOKEN_URL, json={"error": "invalid_grant"}, status=401)
 
-        from jira.auth import exchange_code
+        from jira_genie.auth import exchange_code
         with pytest.raises(JiraAuthError, match="Token exchange failed"):
             exchange_code(code="bad", client_id="cid", code_verifier="v", redirect_uri="http://localhost/cb")
 
@@ -139,7 +139,7 @@ class TestExchangeAndDiscover:
             {"id": "cloud-id-abc", "name": "acme", "url": "https://acme.atlassian.net"},
         ])
 
-        from jira.auth import discover_cloud_resources
+        from jira_genie.auth import discover_cloud_resources
         result = discover_cloud_resources(access_token="token-123")
         assert result == [{"id": "cloud-id-abc", "name": "acme", "url": "https://acme.atlassian.net"}]
 
@@ -147,7 +147,7 @@ class TestExchangeAndDiscover:
         assert req.headers["Authorization"] == "Bearer token-123"
 
     def test_save_login_config(self, tmp_path):
-        from jira.auth import save_login_config
+        from jira_genie.auth import save_login_config
 
         save_login_config(
             base_dir=tmp_path,
@@ -233,7 +233,7 @@ class TestLogin:
     def test_full_flow(self, tmp_path, responses, monkeypatch):
         # Mock browser open
         opened_urls = []
-        monkeypatch.setattr("jira.auth.webbrowser.open", lambda url: opened_urls.append(url))
+        monkeypatch.setattr("jira_genie.auth.webbrowser.open", lambda url: opened_urls.append(url))
 
         # Mock token exchange
         responses.add("POST", JiraAuth.TOKEN_URL, json={
@@ -249,7 +249,7 @@ class TestLogin:
         ])
 
         # Replace wait_for_callback to simulate the browser callback
-        monkeypatch.setattr("jira.auth.wait_for_callback", lambda: "fake-auth-code")
+        monkeypatch.setattr("jira_genie.auth.wait_for_callback", lambda: "fake-auth-code")
 
         result = login("my-client-id", client_secret="my-secret", base_dir=tmp_path)
 
@@ -264,8 +264,8 @@ class TestLogin:
         assert config["client_secret"] == "my-secret"
 
     def test_raises_when_no_resources(self, tmp_path, responses, monkeypatch):
-        monkeypatch.setattr("jira.auth.webbrowser.open", lambda url: None)
-        monkeypatch.setattr("jira.auth.wait_for_callback", lambda: "fake-code")
+        monkeypatch.setattr("jira_genie.auth.webbrowser.open", lambda url: None)
+        monkeypatch.setattr("jira_genie.auth.wait_for_callback", lambda: "fake-code")
         responses.add("POST", JiraAuth.TOKEN_URL, json={
             "access_token": "tok", "expires_in": 3600,
             "refresh_token": "ref", "refresh_expires_in": 86400,

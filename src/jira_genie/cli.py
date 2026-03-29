@@ -7,7 +7,7 @@ import sys
 import argcomplete
 
 # Internal imports
-from jira.completers import FieldSetCompleter, TemplateCompleter
+from jira_genie.completers import FieldSetCompleter, TemplateCompleter
 
 # Default OAuth credentials — override with --client-id/--client-secret or env vars
 DEFAULT_CLIENT_ID = "HhpJ9RgICWpmjsb7fd5oV4tulwVlKmJw"
@@ -223,14 +223,14 @@ def _handle_auth(args, client_id=DEFAULT_CLIENT_ID, client_secret=DEFAULT_CLIENT
     if args.subcommand == "login":
         import os
 
-        from jira.auth import login
+        from jira_genie.auth import login
         cid = args.client_id or os.environ.get("JIRA_CLIENT_ID") or client_id
         csecret = args.client_secret or os.environ.get("JIRA_CLIENT_SECRET") or client_secret
         result = login(cid, client_secret=csecret)
         print(json.dumps(result))
     elif args.subcommand == "status":
         try:
-            from jira.config import ConfigError, discover_instance_dir
+            from jira_genie.config import ConfigError, discover_instance_dir
             instance_dir = discover_instance_dir(instance=getattr(args, "instance", None))
             config = json.loads((instance_dir / "config.json").read_text())
             safe = {k: v for k, v in config.items() if k != "client_secret"}
@@ -241,7 +241,7 @@ def _handle_auth(args, client_id=DEFAULT_CLIENT_ID, client_secret=DEFAULT_CLIENT
         try:
             import shutil
 
-            from jira.config import ConfigError, discover_instance_dir
+            from jira_genie.config import ConfigError, discover_instance_dir
             instance_dir = discover_instance_dir(instance=getattr(args, "instance", None))
             shutil.rmtree(instance_dir)
             print(json.dumps({"message": "Logged out"}))
@@ -250,10 +250,10 @@ def _handle_auth(args, client_id=DEFAULT_CLIENT_ID, client_secret=DEFAULT_CLIENT
 
 
 def _handle_fields(args):
-    from jira.client import JiraClient
+    from jira_genie.client import JiraClient
 
     if args.subcommand == "sync":
-        from jira.schema import sync
+        from jira_genie.schema import sync
         client = JiraClient.from_config(instance=args.instance)
         instance_dir = _get_instance_dir(args.instance)
         project = getattr(args, "project", None)
@@ -290,8 +290,8 @@ def _handle_fields(args):
 
 
 def _handle_issue(args):
-    from jira.client import JiraClient
-    from jira.formatters import format_issue
+    from jira_genie.client import JiraClient
+    from jira_genie.formatters import format_issue
 
     client = JiraClient.from_config(instance=args.instance)
     if args.subcommand == "get":
@@ -310,7 +310,7 @@ def _handle_issue(args):
                 fields = {**json.loads(args.json), **fields}
             if getattr(args, "body_file", None):
                 fields["description"] = _read_file(args.body_file)
-            from jira.schema import resolve_fields
+            from jira_genie.schema import resolve_fields
             schema = _load_schema(args.instance)
             payload = {"fields": resolve_fields(fields, schema)}
         client.issue.edit(args.key, payload)
@@ -319,7 +319,7 @@ def _handle_issue(args):
         if getattr(args, "raw_payload", None):
             payload = json.loads(args.raw_payload)
         else:
-            from jira.templates import build_issue_fields, get_default, load_template
+            from jira_genie.templates import build_issue_fields, get_default, load_template
             schema = _load_schema(args.instance)
             template = None
             template_name = getattr(args, "template", None)
@@ -356,8 +356,8 @@ def _handle_issue(args):
 
 
 def _handle_search(args):
-    from jira.client import JiraClient
-    from jira.formatters import format_issue_list
+    from jira_genie.client import JiraClient
+    from jira_genie.formatters import format_issue_list
 
     client = JiraClient.from_config(instance=args.instance)
     fields = args.fields.split(",") if getattr(args, "fields", None) else None
@@ -366,7 +366,7 @@ def _handle_search(args):
 
 
 def _handle_user(args):
-    from jira.client import JiraClient
+    from jira_genie.client import JiraClient
 
     client = JiraClient.from_config(instance=args.instance)
     if args.subcommand == "me":
@@ -376,7 +376,7 @@ def _handle_user(args):
 
 
 def _handle_skill(args):
-    from jira.skill import TARGETS, detect_targets, install, uninstall
+    from jira_genie.skill import TARGETS, detect_targets, install, uninstall
 
     if args.subcommand == "install":
         if not args.install_all and not args.target:
@@ -490,7 +490,7 @@ def _parse_set_flags(set_args):
 
 
 def _get_instance_dir(instance=None):
-    from jira.config import discover_instance_dir
+    from jira_genie.config import discover_instance_dir
     return discover_instance_dir(instance=instance)
 
 

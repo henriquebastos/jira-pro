@@ -91,7 +91,7 @@ def resolve_fields(friendly, schema):
 
         # ADF fields: convert Markdown strings to ADF
         if field_id in ADF_FIELDS and isinstance(value, str):
-            from jira.adf import markdown_to_adf
+            from jira_genie.adf import markdown_to_adf
             result[field_id] = markdown_to_adf(value)
             continue
 

@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [tool.setuptools.package-data]
-jira = ["skills/jira-genie/SKILL.md"]
+jira_genie = ["skills/jira-genie/SKILL.md"]
 
 [build-system]
 requires = ["setuptools>=75.0"]
@@ -25,7 +25,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [project.scripts]
-jira = "jira.cli:cli"
+jira = "jira_genie.cli:cli"
 
 [dependency-groups]
 dev = [
@@ -38,7 +38,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=jira --cov-report=term-missing --no-header -q"
+addopts = "--cov=jira_genie --cov-report=term-missing --no-header -q"
 
 [tool.ruff]
 line-length = 120
@@ -48,4 +48,4 @@ select = ["E", "F", "I", "N", "UP", "RUF"]
 
 [tool.ruff.lint.isort]
 force-sort-within-sections = true
-known-first-party = ["jira"]
+known-first-party = ["jira_genie"]

@@ -2,7 +2,7 @@
 import pytest
 
 # Internal imports
-from jira.templates import (
+from jira_genie.templates import (
     TemplateError,
     build_issue_fields,
     clear_default,

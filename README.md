@@ -302,7 +302,8 @@ uv run jira --help
 ### Architecture
 
 ```
-src/jira/
+src/jira_genie/
+├── adf.py          # Markdown ↔ Atlassian Document Format conversion
 ├── auth.py         # OAuth 2.0 (3LO) — login, token refresh, PKCE
 ├── cache.py        # FileCache — file-backed key-value store with expiry
 ├── cli.py          # argparse CLI — parse/cli split, all dispatch
@@ -311,6 +312,7 @@ src/jira/
 ├── config.py       # Instance discovery and resolution
 ├── formatters.py   # Pure response transformers (raw API → clean JSON)
 ├── schema.py       # Field registry, type schemas, field resolution
+├── skill.py        # Agent skill install/uninstall for AI coding tools
 └── templates.py    # Template CRUD, merge logic, build_issue_fields
 ```
 

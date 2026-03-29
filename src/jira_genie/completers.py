@@ -34,7 +34,7 @@ def complete_field_set(prefix, schema_fields, schema_projects):
 def _load_schema():
     """Load schema from the default instance. Returns (fields, projects) or ({}, {})."""
     try:
-        from jira.config import discover_instance_dir
+        from jira_genie.config import discover_instance_dir
         instance_dir = discover_instance_dir()
         schema_path = instance_dir / "schema.json"
         if not schema_path.exists():
@@ -48,7 +48,7 @@ def _load_schema():
 def _get_templates_dir():
     """Get templates directory for the default instance."""
     try:
-        from jira.config import discover_instance_dir
+        from jira_genie.config import discover_instance_dir
         return discover_instance_dir() / "templates"
     except Exception:
         return Path("/nonexistent")

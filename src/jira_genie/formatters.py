@@ -11,7 +11,7 @@ def format_issue(raw):
     }
     description = fields.get("description")
     if description and isinstance(description, dict):
-        from jira.adf import adf_to_markdown
+        from jira_genie.adf import adf_to_markdown
         result["description"] = adf_to_markdown(description)
     else:
         result["description"] = None

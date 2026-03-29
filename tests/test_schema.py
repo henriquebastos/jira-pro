@@ -2,7 +2,7 @@
 import json
 
 # Internal imports
-from jira.schema import build_field_registry, build_type_schema, friendly_name, resolve_fields, sync
+from jira_genie.schema import build_field_registry, build_type_schema, friendly_name, resolve_fields, sync
 
 
 class TestFriendlyName:
