@@ -270,6 +270,14 @@ class TestLists:
             ]},
         ]
 
+    def test_empty_list_items_returns_none(self):
+        """A list node whose children all convert to None should return None."""
+        from jira_genie.adf import convert_node
+        node = {"type": "list", "attrs": {"ordered": False}, "children": [
+            {"type": "list_item", "children": []},
+        ]}
+        assert convert_node(node) is None
+
     def test_nested_list(self):
         result = markdown_to_adf("- parent\n  - child")
         outer = result["content"][0]
@@ -338,6 +346,64 @@ class TestAdfToText:
             ]},
         ]}
         assert adf_to_markdown(adf) == "[click here](https://example.com)"
+
+    def test_em_and_strike_marks(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "paragraph", "content": [
+                {"type": "text", "text": "italic", "marks": [{"type": "em"}]},
+                {"type": "text", "text": " and "},
+                {"type": "text", "text": "deleted", "marks": [{"type": "strike"}]},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "*italic* and ~~deleted~~"
+
+    def test_ordered_list(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "orderedList", "content": [
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "first"}]},
+                ]},
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "second"}]},
+                ]},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "1. first\n2. second"
+
+    def test_blockquote(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "blockquote", "content": [
+                {"type": "paragraph", "content": [{"type": "text", "text": "quoted text"}]},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "> quoted text"
+
+    def test_rule(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "paragraph", "content": [{"type": "text", "text": "before"}]},
+            {"type": "rule"},
+            {"type": "paragraph", "content": [{"type": "text", "text": "after"}]},
+        ]}
+        assert adf_to_markdown(adf) == "before\n\n---\n\nafter"
+
+    def test_list_item_with_multiple_blocks(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "bulletList", "content": [
+                {"type": "listItem", "content": [
+                    {"type": "paragraph", "content": [{"type": "text", "text": "line 1"}]},
+                    {"type": "paragraph", "content": [{"type": "text", "text": "line 2"}]},
+                ]},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "- line 1\nline 2"
+
+    def test_unknown_node_type_renders_children(self):
+        adf = {"type": "doc", "version": 1, "content": [
+            {"type": "unknownBlock", "content": [
+                {"type": "text", "text": "inside unknown"},
+            ]},
+        ]}
+        assert adf_to_markdown(adf) == "inside unknown"
 
     def test_none_returns_empty(self):
         assert adf_to_markdown(None) == ""
