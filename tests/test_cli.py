@@ -163,6 +163,13 @@ class TestParseTemplate:
         assert args.body_file == "/tmp/desc.md"
 
 
+class TestParseSkill:
+    def test_skill_status(self):
+        args = parse(["skill", "status"])
+        assert args.command == "skill"
+        assert args.subcommand == "status"
+
+
 class TestParseSprint:
     def test_sprint_current(self):
         args = parse(["sprint", "current", "--board", "42"])

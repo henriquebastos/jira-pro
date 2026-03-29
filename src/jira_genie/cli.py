@@ -178,6 +178,8 @@ def parse(argv=None):
     skill_install.add_argument("--target", action="append", choices=targets, help="Specific tool (repeatable)")
     skill_install.add_argument("--dry-run", action="store_true", help="Show what would change")
 
+    skill_sub.add_parser("status", help="Show installation status")
+
     skill_uninstall = skill_sub.add_parser("uninstall", help="Remove skill from AI coding tools")
     skill_uninstall.add_argument("--all", dest="install_all", action="store_true", help="Auto-detect and remove")
     skill_uninstall.add_argument("--target", action="append", choices=targets, help="Specific tool (repeatable)")
@@ -433,6 +435,20 @@ def _handle_skill(args):
 
         if not dry_run:
             print(f"\n✓ Installed jira skill to {len(actions)} target(s)")
+
+    elif args.subcommand == "status":
+        from pathlib import Path
+
+        detected = detect_targets()
+        for name, info in TARGETS.items():
+            dest = Path(info["dest"]).expanduser() / "SKILL.md"
+            if dest.exists():
+                status = "installed"
+            elif name in detected:
+                status = "not installed"
+            else:
+                status = "not found"
+            print(f"  {name:10s} {info['label']:30s} ({status})")
 
     elif args.subcommand == "uninstall":
         if not args.install_all and not args.target:
