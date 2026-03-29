@@ -11,6 +11,13 @@ class JiraSession(ProSession):
         super().before_prepare_body(request)
 
 
+def safe_request(session, method, url, **kwargs):
+    """Request that handles empty responses (204 No Content)."""
+    response = session.request(method, url, **kwargs)
+    response.raise_for_status()
+    return response.json() if response.content else None
+
+
 class IssueSubClient(Client):
     def get(self, issue_key, fields=None, expand=None):
         params = {}
@@ -24,14 +31,10 @@ class IssueSubClient(Client):
         return self.post(url="rest/api/3/issue", json=payload)
 
     def edit(self, issue_key, payload):
-        response = self.session.request("PUT", f"rest/api/3/issue/{issue_key}", json=payload)
-        response.raise_for_status()
-        return response.json() if response.content else None
+        return safe_request(self.session, "PUT", f"rest/api/3/issue/{issue_key}", json=payload)
 
     def delete(self, issue_key):
-        response = self.session.request("DELETE", f"rest/api/3/issue/{issue_key}")
-        response.raise_for_status()
-        return response.json() if response.content else None
+        return safe_request(self.session, "DELETE", f"rest/api/3/issue/{issue_key}")
 
     def get_transitions(self, issue_key):
         result = super().get(url=f"rest/api/3/issue/{issue_key}/transitions")
@@ -44,21 +47,16 @@ class IssueSubClient(Client):
             available = [t["name"] for t in transitions]
             raise ValueError(f"Transition '{status_name}' not found. Available: {available}")
         payload = {"transition": {"id": match["id"]}}
-        response = self.session.request("POST", f"rest/api/3/issue/{issue_key}/transitions", json=payload)
-        response.raise_for_status()
-        return response.json() if response.content else None
+        return safe_request(self.session, "POST", f"rest/api/3/issue/{issue_key}/transitions", json=payload)
 
     def assign(self, issue_key, account_id):
-        response = self.session.request("PUT", f"rest/api/3/issue/{issue_key}/assignee", json={"accountId": account_id})
-        response.raise_for_status()
-        return response.json() if response.content else None
+        url = f"rest/api/3/issue/{issue_key}/assignee"
+        return safe_request(self.session, "PUT", url, json={"accountId": account_id})
 
     def add_comment(self, issue_key, body):
         from jira_genie.adf import markdown_to_adf
         adf_body = markdown_to_adf(body) if isinstance(body, str) else body
-        response = self.session.request("POST", f"rest/api/3/issue/{issue_key}/comment", json={"body": adf_body})
-        response.raise_for_status()
-        return response.json() if response.content else None
+        return safe_request(self.session, "POST", f"rest/api/3/issue/{issue_key}/comment", json={"body": adf_body})
 
     def get_comments(self, issue_key):
         result = super().get(url=f"rest/api/3/issue/{issue_key}/comment")
