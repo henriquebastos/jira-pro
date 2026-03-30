@@ -1,3 +1,42 @@
+## [0.4.0] - 2026-03-30
+
+### 🚀 Features
+
+- Adf_to_markdown converter and description in formatted output #closes bean-a2769179 #closes bean-2a55b167
+- --body-file for comment, create, and edit #closes bean-fb39814d
+- Rename skill to jira-genie, add jira skill install command #closes bean-fe1b5865 #closes bean-a581ea9a
+- Add --description shorthand to issue edit #closes bean-e757dca7
+- Add --json to bulk edit and wire bulk handler #closes bean-c946eda6
+- Add jira skill status command #closes bean-20118fc6
+- Structured JSON error output instead of raw tracebacks #closes bean-85211b4e
+- Rework skill install to accept path, add tests #closes bean-1f03c7b5
+
+### 🐛 Bug Fixes
+
+- Handle 204 No Content on edit, assign, transition, and comment #closes bean-d7cb4e17
+
+### 🚜 Refactor
+
+- Rename package from jira to jira_genie #closes bean-2cfef984
+- Extract safe_request helper for 204-safe API calls #closes bean-e01d0040
+- Split _handle_issue into per-subcommand handlers #closes bean-0cd5cbe2
+
+### 📚 Documentation
+
+- Update CHANGELOG.md
+- Update README and SKILL.md with new features
+
+### 🧪 Testing
+
+- Add coverage for detect_targets and resolve_paths
+- 100% coverage on adf.py
+- Improve client.py coverage to 84%
+
+### ⚙️ Miscellaneous Tasks
+
+- Move journal.jsonl to .beans/
+- Re-export journal from db
+- Scrub internal references from PLAN.md and journal
 ## [0.3.0] - 2026-03-27
 
 ### 🚀 Features
