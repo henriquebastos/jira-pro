@@ -229,6 +229,8 @@ def _dispatch(args):
         handler(args)
     elif args.command is None:
         parse(["--help"])
+    else:
+        raise ValueError(f"Unknown command: {args.command}")
 
 
 def _handle_auth(args, client_id=DEFAULT_CLIENT_ID, client_secret=DEFAULT_CLIENT_SECRET):

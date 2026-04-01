@@ -1,5 +1,8 @@
+# Python imports
+import pytest
+
 # Internal imports
-from jira_genie.cli import parse
+from jira_genie.cli import cli, parse
 
 
 class TestParseAuth:
@@ -161,6 +164,14 @@ class TestParseTemplate:
     def test_issue_create_body_file(self):
         args = parse(["issue", "create", "--body-file", "/tmp/desc.md", "--summary", "Title"])
         assert args.body_file == "/tmp/desc.md"
+
+
+class TestDispatchSilentFailures:
+    def test_unhandled_command_exits_nonzero(self):
+        """Commands parsed but missing from handlers dict should not silently succeed."""
+        with pytest.raises(SystemExit) as exc_info:
+            cli(["template", "list"])
+        assert exc_info.value.code != 0
 
 
 class TestCliErrorOutput:
