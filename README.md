@@ -221,8 +221,8 @@ the synced schema. You write `story_points`, the API receives `customfield_10036
 
 Values are also expanded based on field type:
 
-| You write | API receives |
-|-----------|-------------|
+| You write                    | API receives                                     |
+| ---------------------------- | ------------------------------------------------ |
 | `"project": "DEV"` | `"project": {"key": "DEV"}` |
 | `"issuetype": "Task"` | `"issuetype": {"name": "Task"}` |
 | `"parent": "DEV-100"` | `"parent": {"key": "DEV-100"}` |
@@ -280,7 +280,7 @@ jira template default --clear       # remove default
 
 Fields merge in layers — later layers override earlier ones (shallow, not deep):
 
-```
+```text
 Template → --json → --set/--summary → resolve_fields() → API
 ```
 
@@ -297,7 +297,7 @@ Requires `argcomplete` on PATH: `uv tool install argcomplete`
 Completes commands, template names, field names, and enum values from your
 live schema:
 
-```
+```text
 jira issue create --template <TAB>         → backend, bug, ...
 jira issue edit DEV-123 --set <TAB>        → story_points=, priority=, team=, ...
 jira issue edit DEV-123 --set priority=<TAB>  → P0: Critical, P1: High, ...
@@ -305,7 +305,7 @@ jira issue edit DEV-123 --set priority=<TAB>  → P0: Critical, P1: High, ...
 
 ## Configuration
 
-```
+```text
 ~/.config/jira-genie/
 ├── config.json                     # default instance
 └── {cloud_id}/
@@ -329,7 +329,7 @@ uv run jira --help
 
 ### Architecture
 
-```
+```text
 src/jira_genie/
 ├── adf.py          # Markdown ↔ Atlassian Document Format conversion
 ├── auth.py         # OAuth 2.0 (3LO) — login, token refresh, PKCE
@@ -344,7 +344,7 @@ src/jira_genie/
 └── templates.py    # Template CRUD, merge logic, build_issue_fields
 ```
 
-See [conventions.md](conventions.md) for code style and workflow guidelines.
+See [docs/](docs/) for code style, testing, workflow, and architecture guidelines.
 
 ## License
 

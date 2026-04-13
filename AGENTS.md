@@ -1,5 +1,27 @@
-@conventions.md
-@.beans/AGENTS.md
+# jira-genie
+
+Python CLI + library for Jira Cloud. JSON output for agent consumption,
+human-readable when interactive.
+
+## Orientation
+
+- **Architecture and module map:** docs/architecture.md
+- **Code conventions:** docs/conventions.md
+- **Testing patterns:** docs/testing.md
+- **Workflow (beans → TDD → commit):** docs/workflow.md
+- **Tooling reference:** docs/tooling.md
+- **Implementation design:** PLAN.md
+
+## Verification gate
+
+```bash
+uv run pytest
+uv run ruff check src/ tests/
+```
+
+## Work tracking
+
+@docs/beans.md
 
 ## Releasing
 
@@ -9,5 +31,4 @@ Use the release script — never release manually:
 ./scripts/release.sh 0.5.0
 ```
 
-It runs tests, bumps the version, generates the changelog, commits, tags,
-pushes, and creates the GitHub release. Requires `git-cliff` and `gh`.
+Requires `git-cliff` and `gh`.
