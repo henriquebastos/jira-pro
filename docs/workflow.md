@@ -1,98 +1,188 @@
-# Workflow
+# Workflow — Sub-Agent Operating Script
 
-How work moves through this project — from task discovery to merged commit.
+This is the operating script for a sub-agent working on a beans epic
+inside an isolated worktree. The orchestrator spawns one sub-agent per
+epic and passes the epic ID.
 
-## Task lifecycle
+## Input
 
-```text
-beans ready          → pick a bean
-beans claim <id>     → claim it
-  ↓
-Read bean body       → understand scope, what "done" looks like
-  ↓
-RED: write failing test
-GREEN: make it pass  → commit: feat: …
-REFACTOR: clean up   → commit: refactor: …
-  ↓  (repeat until bean scope is complete)
-Verify gate          → uv run pytest && uv run ruff check src/ tests/
-inspect-5p           → review uncommitted changes
-Commit               → #closes <bean-id> on final commit
-beans close <id>     → close the bean
-```
+- `EPIC_ID` — the beans epic to implement
 
-Every step below is a rule within this lifecycle.
+## Step 0: Orient
 
-## Bean-first rule
+1. Read the epic:
 
-Every change — feature, fix, or refactor — MUST have a bean before code begins.
-If you discover work mid-task, create a bean for it before starting. No exceptions,
-even for "quick fixes."
+   ```bash
+   beans show <EPIC_ID>
+   ```
 
-## Update docs with feature changes
+2. Understand the scope from the epic body. The body is the spec —
+   it describes what needs to change, why, and what "done" looks like.
 
-When a feature changes user-facing behavior (new flags, changed defaults, new commands),
-update README.md in the same commit. Don't leave docs out of sync.
+3. Check for existing leaf beans:
 
-## Red-green-refactor TDD
+   ```bash
+   beans list --parent <EPIC_ID>
+   ```
 
-1. Write a failing test (RED)
-2. Make it pass minimally (GREEN)
-3. Commit: `feat: <description>`
-4. Refactor, verify green
-5. Commit: `refactor: <description>`
+   If leaves already exist (e.g. from a previous crashed run), assess
+   their status before creating new ones.
 
-## Small commits
+## Step 1: Plan — break the epic into leaf beans
 
-Each commit does one thing. Use conventional commit messages:
+1. Analyze the epic scope and break it into small, independent tasks.
+   Each leaf bean should map to one TDD cycle — one failing test, one
+   passing implementation, one commit.
 
-- `feat:` — new functionality
-- `fix:` — bug fix
-- `refactor:` — code improvement, no behavior change
-- `chore:` — tooling, config, deps
-- `docs:` — documentation
-- `ci:` — CI/CD changes
+2. Create leaf beans:
 
-When a commit resolves a bean, append `#closes <bean-id>` to the commit message:
+   ```bash
+   beans create "Short task title" --parent <EPIC_ID> --body "What to change and why. Done when: ..."
+   ```
 
-```bash
-git commit -m "feat: add --body flag to create command #closes bean-69b4e720"
-```
+3. Add dependencies between leaves when order matters:
 
-## Verify before committing
+   ```bash
+   beans dep add <blocker-id> <blocked-id>
+   ```
 
-```bash
-uv run pytest
-uv run ruff check src/ tests/
-```
+4. Verify the plan:
 
-## Review before committing (required)
+   ```bash
+   beans list --parent <EPIC_ID>
+   beans ready --parent <EPIC_ID>
+   ```
 
-After tests and lint pass, **always** run `inspect-5p` before committing — including
-in autonomous mode:
+   `beans ready` should show only the unblocked starting tasks.
 
-```text
-inspect-5p
-```
+## Step 2: Execute — TDD loop
 
-This runs a 5-pass parallel review of uncommitted changes, covering security, correctness,
-design, testing, and conventions. Fix any issues found, re-run tests, then commit.
+Repeat until no ready leaves remain:
 
-## Public repo hygiene
+1. **Pick** the next unblocked leaf:
 
-This is a public repo. Before committing:
+   ```bash
+   beans ready --parent <EPIC_ID>
+   ```
 
-- No company names, internal URLs, or real email addresses in code, docs, or beans
-- Use generic examples: `acme.atlassian.net`, `alice@example.com`, `DEV-123`
-- Hardcoded API credentials are intentional (same pattern as gh CLI) — document why
-- Author in pyproject.toml: `Henrique Bastos <henrique@bastos.net>`
+2. **Claim** it:
 
-## Releasing
+   ```bash
+   beans claim <leaf-id> --actor agent
+   ```
 
-Use the release script — never release manually:
+3. **RED** — write a failing test that captures the leaf's acceptance
+   criteria.
 
-```bash
-./scripts/release.sh 0.5.0
-```
+4. **GREEN** — make it pass with the simplest implementation.
 
-It runs tests, bumps the version, generates the changelog, commits, tags,
-pushes, and creates the GitHub release. Requires `git-cliff` and `gh`.
+5. **Verify gate:**
+
+   ```bash
+   uv run pytest
+   uv run ruff check src/ tests/
+   ```
+
+6. **Review** — run `inspect-5p` on uncommitted changes.
+
+7. **Commit:**
+
+   ```bash
+   git commit -m "feat: <description> #closes <leaf-id>"
+   ```
+
+   Use conventional commit prefixes. Include `#closes <leaf-id>` to
+   link the commit to the bean.
+
+8. **Refactor** if needed, verify green, then:
+
+   ```bash
+   git commit -m "refactor: <description>"
+   ```
+
+9. **Close** the leaf:
+
+   ```bash
+   beans close <leaf-id>
+   ```
+
+10. Check for newly unblocked leaves and continue:
+
+    ```bash
+    beans ready --parent <EPIC_ID>
+    ```
+
+## Step 3: Finalize — push and PR
+
+1. Verify all leaves are closed:
+
+   ```bash
+   beans list --parent <EPIC_ID> --status open
+   ```
+
+   This should return nothing. If open leaves remain, go back to step 2.
+
+2. Run the full verification gate one final time:
+
+   ```bash
+   uv run pytest
+   uv run ruff check src/ tests/
+   ```
+
+3. Push the branch:
+
+   ```bash
+   git push -u origin HEAD
+   ```
+
+4. Create a PR:
+
+   ```bash
+   gh pr create --title "<epic title>" --body "<PR body>"
+   ```
+
+   The PR body should include:
+   - Context: why this change (from epic body)
+   - Summary: what changed (from closed leaf beans)
+   - Test plan: verification commands run
+
+5. If a GitHub Issue originated this epic, link it:
+
+   ```bash
+   gh pr edit <pr-number> --add-label "closes #<issue-number>"
+   ```
+
+6. Close the epic:
+
+   ```bash
+   beans close <EPIC_ID>
+   ```
+
+## Conventions
+
+- **Branch naming:** `<EPIC_ID>-<friendly-slug>` (e.g. `bean-1be9a822-add-bulk-edit-command`).
+  Derive the slug from the epic title: lowercase, spaces to hyphens, drop punctuation.
+- **One branch per epic.** All leaf bean commits land on the same branch.
+- **Conventional commits:** `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`
+- **Bean references:** append `#closes <bean-id>` to the commit that completes a leaf.
+- **No scope creep.** If you discover work outside the epic, create a new
+  bean for it (`beans create "..." --body "..."`) — do not expand the current epic.
+- **Public repo hygiene.** No company names, internal URLs, or real emails.
+  Use generic examples: `acme.atlassian.net`, `alice@example.com`, `DEV-123`.
+
+## Error handling
+
+- **Test failure:** fix it before committing. Do not skip the verify gate.
+- **inspect-5p finds issues:** fix them, re-run tests, then commit.
+- **Crash/restart:** `beans ready --parent <EPIC_ID>` shows remaining work.
+  Assess existing branch state and resume from where things left off.
+- **Blocked by missing info:** create a comment on the GitHub Issue (if one
+  exists) describing the blocker, then stop. Do not guess.
+
+## Guards
+
+- Never work outside the worktree directory.
+- Never modify beans from other epics.
+- Never push to `main` directly — always go through a PR.
+- Never skip `inspect-5p` before committing.
+- Never close a leaf bean without a passing verify gate.

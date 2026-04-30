@@ -8,7 +8,8 @@ human-readable when interactive.
 - **Architecture and module map:** docs/architecture.md
 - **Code conventions:** docs/conventions.md
 - **Testing patterns:** docs/testing.md
-- **Workflow (beans → TDD → commit):** docs/workflow.md
+- **Contributing (beans → TDD → commit):** docs/contributing.md
+- **Agent workflow (sub-agent operating script):** docs/workflow.md
 - **Tooling reference:** docs/tooling.md
 - **Implementation design:** PLAN.md
 
